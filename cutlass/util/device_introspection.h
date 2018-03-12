@@ -40,20 +40,27 @@ namespace cutlass {
 
 
 /******************************************************************************
- * math_operation_class_t
+ * math_operation_scalar
  *
- * Enumeration to select the appropriate math operation
+ * Type to select scalar (and vector) multiply-accumulate operations
  *
- * The assumption is multiple math operations may be used to compute GEMM
- * for a given selection of operand and accumulator types.
+ * The assumption is that if one wants to customize (for eg: epilogue method)
+ * block_task class, type needs to be changed.
  *
  ******************************************************************************/
+class math_operation_scalar {
+};
 
-/// Math operation
-enum class math_operation_class_t
-{
-    scalar,                     // scalar (and vector) multiply-accumulate operations
-    matrix                      // Volta tensor operations
+/******************************************************************************
+ * math_operation_matrix
+ *
+ * Type to select volta tensor operations
+ *
+ * The assumption is that if one wants to customize (for eg: epilogue method)
+ * block_task class, type needs to be changed.
+ *
+ ******************************************************************************/
+class math_operation_matrix {
 };
 
 /******************************************************************************

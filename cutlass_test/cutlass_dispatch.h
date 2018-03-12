@@ -74,7 +74,7 @@ namespace cutlass {
  */
 template <
     gemm::tiling_strategy::kind_t            _TilingStrategy,        ///< Tile-sizing classification category
-    math_operation_class_t                  _math_op,            // Indicates
+    typename                                _math_op,            // Indicates
     matrix_transform_t::kind_t              _TransformA,         ///< Transformation op for matrix A
     matrix_transform_t::kind_t              _TransformB,         ///< Transformation op for matrix B
     typename                                _value,              ///< Multiplicand value type (matrices A and B)
@@ -89,13 +89,13 @@ struct cutlass_gemm_dispatch
     //
 
     static const gemm::tiling_strategy::kind_t       TilingStrategy = _TilingStrategy;
-    static const math_operation_class_t             math_op = _math_op;
     static const matrix_transform_t::kind_t         TransformA = _TransformA;
     static const matrix_transform_t::kind_t         TransformB = _TransformB;
 
     using value_t = _value;
     using accum_t = _accum;
     using epilogue_op_t = _epilogue_op_t;
+    using math_op = _math_op;
 
     //
     // Methods

@@ -100,33 +100,33 @@ struct integer_alias<double> {
  ******************************************************************************/
 
 /// Returns a string to prefix 'gemm' to construct CUBLAS-like kernel names
-template <math_operation_class_t math_op, typename value_t, typename accum_t> char const *to_prefix_string();
+template <typename math_op, typename value_t, typename accum_t> char const *to_prefix_string();
 
-template <> char const *to_prefix_string<math_operation_class_t::scalar, half_t, half_t>() {
+template <> char const *to_prefix_string<math_operation_scalar, half_t, half_t>() {
     return "H";
 }
 
-template <> char const *to_prefix_string<math_operation_class_t::scalar, __half, __half>() {
+template <> char const *to_prefix_string<math_operation_scalar, __half, __half>() {
     return "H";
 }
 
-template <> char const *to_prefix_string<math_operation_class_t::scalar, float, float>() {
+template <> char const *to_prefix_string<math_operation_scalar, float, float>() {
     return "S";
 }
 
-template <> char const *to_prefix_string<math_operation_class_t::matrix, __half, __half>() {
+template <> char const *to_prefix_string<math_operation_matrix, __half, __half>() {
     return "WmmaH";
 }
 
-template <> char const *to_prefix_string<math_operation_class_t::matrix, __half, float>() {
+template <> char const *to_prefix_string<math_operation_matrix, __half, float>() {
     return "WmmaS";
 }
 
-template <> char const *to_prefix_string<math_operation_class_t::scalar, double, double>() {
+template <> char const *to_prefix_string<math_operation_scalar, double, double>() {
     return "D";
 }
 
-template <> char const *to_prefix_string<math_operation_class_t::scalar, int8_t, int32_t>() {
+template <> char const *to_prefix_string<math_operation_scalar, int8_t, int32_t>() {
     return "I";
 }
 

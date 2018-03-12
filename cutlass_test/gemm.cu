@@ -122,7 +122,7 @@ template <
     matrix_transform_t::kind_t  TransformB,     ///< Transformation op for matrix B
     typename                    value_t,        ///< Multiplicand value type (matrices A and B)
     typename                    accum_t>        ///< Accumulator value type (matrix C and scalars)
-bool test(
+bool test_impl(
     int m,          ///< Height of C in rows
     int n,          ///< Width of C in columns
     int k,          ///< Width (height) of A (B)
@@ -316,7 +316,7 @@ bool test(
  * Compute C = (alpha * A * B) + (beta * C)
  */
 template <
-    math_operation_class_t     math_op,
+    typename                   math_op,
     matrix_transform_t::kind_t TransformA,  ///< Transformation op for matrix A
     matrix_transform_t::kind_t TransformB,  ///< Transformation op for matrix B
     typename value_t,                       ///< Multiplicand value type (matrices A and B)
@@ -366,7 +366,7 @@ bool test(
     fflush(stdout);
 
     // CUBLAS
-    test_error |= test<
+    test_error |= test_impl<
         cublas_gemm<gemm::tiling_strategy::Unknown, math_op, TransformA, TransformB, value_t, accum_t>,
         TransformA,
         TransformB,
@@ -374,42 +374,42 @@ bool test(
         accum_t>(m, n, k, accum_t(alpha), accum_t(beta));
 
     // CUTLASS
-    test_error |= test<
+    test_error |= test_impl<
         cutlass_gemm_dispatch<gemm::tiling_strategy::Small, math_op, TransformA, TransformB, value_t, accum_t>,
         TransformA,
         TransformB,
         value_t,
         accum_t>(m, n, k, accum_t(alpha), accum_t(beta));
 
-    test_error |= test<
+    test_error |= test_impl<
         cutlass_gemm_dispatch<gemm::tiling_strategy::Medium, math_op, TransformA, TransformB, value_t, accum_t>,
         TransformA,
         TransformB,
         value_t,
         accum_t>(m, n, k, accum_t(alpha), accum_t(beta));
 
-    test_error |= test<
+    test_error |= test_impl<
         cutlass_gemm_dispatch<gemm::tiling_strategy::Large, math_op, TransformA, TransformB, value_t, accum_t>,
         TransformA,
         TransformB,
         value_t,
         accum_t>(m, n, k, accum_t(alpha), accum_t(beta));
 
-    test_error |= test<
+    test_error |= test_impl<
         cutlass_gemm_dispatch<gemm::tiling_strategy::Tall, math_op, TransformA, TransformB, value_t, accum_t>,
         TransformA,
         TransformB,
         value_t,
         accum_t>(m, n, k, accum_t(alpha), accum_t(beta));
 
-    test_error |= test<
+    test_error |= test_impl<
         cutlass_gemm_dispatch<gemm::tiling_strategy::Wide, math_op, TransformA, TransformB, value_t, accum_t>,
         TransformA,
         TransformB,
         value_t,
         accum_t>(m, n, k, accum_t(alpha), accum_t(beta));
 
-    test_error |= test<
+    test_error |= test_impl<
         cutlass_gemm_dispatch<gemm::tiling_strategy::Huge, math_op, TransformA, TransformB, value_t, accum_t>,
         TransformA,
         TransformB,
@@ -438,25 +438,25 @@ int main(int argc, const char **argv)
 
     // Define value_t and accum_t (multiplicand and accumulator types, respectively)
 #if defined(TEST_SGEMM)
-    typedef float       value_t;
-    typedef float       accum_t;
-    const math_operation_class_t math_op = math_operation_class_t::scalar;
+    typedef float                 value_t;
+    typedef float                 accum_t;
+    typedef math_operation_scalar math_op;
 #elif defined(TEST_DGEMM)
-    typedef double      value_t;
-    typedef double      accum_t;
-    const math_operation_class_t math_op = math_operation_class_t::scalar;
+    typedef double                value_t;
+    typedef double                accum_t;
+    typedef math_operation_scalar math_op;
 #elif defined(TEST_HGEMM)
-    typedef __half      value_t;
-    typedef __half      accum_t;
-    const math_operation_class_t math_op = math_operation_class_t::scalar;
+    typedef __half                value_t;
+    typedef __half                accum_t;
+    typedef math_operation_scalar math_op;
 #elif defined(TEST_IGEMM)
-    typedef int8_t      value_t;
-    typedef int32_t     accum_t;
-    const math_operation_class_t math_op = math_operation_class_t::scalar;
+    typedef int8_t                value_t;
+    typedef int32_t               accum_t;
+    typedef math_operation_scalar math_op;
 #elif defined(TEST_WGEMM)
-    typedef half        value_t;
-    typedef float       accum_t;
-    const math_operation_class_t math_op = math_operation_class_t::matrix;
+    typedef half                  value_t;
+    typedef float                 accum_t;
+    typedef math_operation_matrix math_op;
 #else
     #error Unknown GEMM type requested.
 #endif

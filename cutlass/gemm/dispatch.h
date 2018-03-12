@@ -99,7 +99,7 @@ struct param_pack
 
 /// Conditional selection for block task
 template <
-    math_operation_class_t      math_op,            ///<
+    typename                    math_op,            ///<
     typename                    block_task_policy_t,  ///< Parameterization of block_task_policy
     typename                    value_t,            ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,            ///< Accumulator value type (matrix C and scalars)
@@ -131,7 +131,7 @@ template <
     typename                    dp_accum_traits_t   ///< Accumulator traits
 >
 struct gemm_block_task<
-    math_operation_class_t::scalar,
+    math_operation_scalar,
     block_task_policy_t,
     value_t,
     accum_t,
@@ -177,7 +177,7 @@ template <
     typename                    dp_accum_traits_t   ///< Accumulator traits
 >
 struct gemm_block_task<
-    math_operation_class_t::matrix,
+    math_operation_matrix,
     block_task_policy_t,
     value_t,
     accum_t,
@@ -221,7 +221,7 @@ struct gemm_block_task<
  * passing it along to PTXAS, but it is currently resulting in less optimal codegen
  */
 template <
-    math_operation_class_t      math_op,            ///< Indicates which class of math operation to select
+    typename                    math_op,            ///< Indicates which class of math operation to select
     typename                    block_task_policy_t,  ///< Parameterization of block_task_policy
     matrix_transform_t::kind_t  TransformA,         ///< Transformation op for matrix A
     int                         LdgAlignA,          ///< Alignment of A matrix elements in bytes
@@ -342,7 +342,7 @@ struct launch_configuration
  * tuning parameterizations of kernel.
  */
 template <
-    math_operation_class_t      math_op,            ///< Indicates which class of math operation to select
+    typename                    math_op,            ///< Indicates which class of math operation to select
     typename                    block_task_policy_t,  ///< Parameterization of block_task_policy
     matrix_transform_t::kind_t  TransformA,         ///< Transformation op for matrix A
     int                         LdgAlignA,          ///< Alignment of A matrix elements in bytes
@@ -491,8 +491,8 @@ launch_configuration dispatch(
  * Computes gemm on device matrices
  */
 template <
-    tiling_strategy::kind_t      TilingStrategy,    ///< Tile-sizing classification
-    math_operation_class_t      math_op,        ///< Indicates which class of math operation to select
+    tiling_strategy::kind_t     TilingStrategy, ///< Tile-sizing classification
+    typename                    math_op,        ///< Indicates which class of math operation to select
     matrix_transform_t::kind_t  TransformA,     ///< Transformation op for matrix A
     int                         LdgAlignA,      ///< Alignment (in bytes) of A operand
     matrix_transform_t::kind_t  TransformB,     ///< Transformation op for matrix B
