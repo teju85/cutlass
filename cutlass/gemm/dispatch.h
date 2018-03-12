@@ -167,6 +167,7 @@ template <
     typename                    block_task_policy_t,  ///< Parameterization of block_task_policy
     typename                    value_t,            ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,            ///< Accumulator value type (matrix C and scalars)
+    typename                    output_t,           ///< Output value type
     matrix_transform_t::kind_t  TransformA,         ///< View transform enumerant for matrix A
     int                         LdgAlignA,          ///< Alignment (in bytes) for A operand
     matrix_transform_t::kind_t  TransformB,         ///< View transform enumerant for matrix B
@@ -181,7 +182,7 @@ struct gemm_block_task<
     block_task_policy_t,
     value_t,
     accum_t,
-    accum_t,
+    output_t,
     TransformA,
     LdgAlignA,
     TransformB,
@@ -235,7 +236,7 @@ template <
     bool                        AllowRaggedTiles,   ///< Boolean to indicate whether AllowRaggedTiles handling is enabled
     typename                    dp_accum_traits_t   ///< Accumulator traits
 >
-__global__ void kernel(param_pack<value_t, accum_t, epilogue_op_t> pack)
+__global__ void kernel(param_pack<value_t, output_t, epilogue_op_t> pack)
 {
     // Parameterize task type
     typedef typename gemm_block_task<
@@ -513,7 +514,7 @@ launch_configuration device_gemm(
     epilogue_op_t   epilogue_op,                ///< Epilogue operation to update matrix C
     value_t         *d_a,                       ///< Device pointer to matrix A array values
     value_t         *d_b,                       ///< Device pointer to matrix B array values
-    accum_t         *d_c,                       ///< Device pointer to matrix C array values
+    output_t        *d_c,                       ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
     bool            enable_k_split=true,        ///< enable/disable k-split
     bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to
