@@ -57,6 +57,7 @@ cublasStatus_t cublas_gemm_dispatch(
     int32_t         beta,                       ///< Scalar used for addend
     int32_t         *d_c,                       ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    bool            enable_k_split = true,      ///< enable/disable k-split (put here for a uniform i/f between cublas/cutlass)
     bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to check for errors.
 {
     return cublasGemmEx(
@@ -98,6 +99,7 @@ cublasStatus_t cublas_gemm_dispatch(
     __half          beta,                       ///< Scalar used for addend
     __half          *d_c,                       ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    bool            enable_k_split = true,      ///< enable/disable k-split (put here for a uniform i/f between cublas/cutlass)
     bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to check for errors.
 {
     return cublasHgemm(
@@ -131,6 +133,7 @@ cublasStatus_t cublas_gemm_dispatch(
     float           beta,                       ///< Scalar used for addend
     float           *d_c,                       ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    bool            enable_k_split = true,      ///< enable/disable k-split (put here for a uniform i/f between cublas/cutlass)
     bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to check for errors.
 {
     return cublasSgemm(
@@ -163,6 +166,7 @@ cublasStatus_t cublas_gemm_dispatch(
     double          beta,                       ///< Scalar used for addend
     double          *d_c,                       ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    bool            enable_k_split = true,      ///< enable/disable k-split (put here for a uniform i/f between cublas/cutlass)
     bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to check for errors.
 {
     return cublasDgemm(
@@ -191,6 +195,7 @@ cublasStatus_t cublas_gemm_dispatch(
     float           beta,                       ///< Scalar used for addend
     float           *d_c,                       ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    bool            enable_k_split = true,      ///< enable/disable k-split (put here for a uniform i/f between cublas/cutlass)
     bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to check for errors.
 {
     return cublasGemmEx(
@@ -253,6 +258,7 @@ struct cublas_gemm
         accum_t                                 alpha,                      ///< Scalar used for multiplicands
         accum_t                                 beta,                       ///< Scalar used for addend
         cudaStream_t                            stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+        bool                                    enable_k_split = true,      ///< enable/disable k-split (put here for a uniform i/f between cublas/cutlass)
         bool                                    debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to check for errors.
     {
         cublasStatus_t cublas_error = cublas_gemm_dispatch(
@@ -268,6 +274,7 @@ struct cublas_gemm
             beta,
             C,
             stream,
+            enable_k_split,
             debug_synchronous);
 
         cudaError_t error;

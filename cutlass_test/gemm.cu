@@ -186,6 +186,7 @@ bool test(
         alpha,
         beta,
         stream,
+        true,
         !g_schmoo).result;
 
     bool not_applicable = (error == cudaErrorInvalidValue);
@@ -250,6 +251,7 @@ bool test(
                     alpha,
                     beta,
                     stream,
+                    true,
                     false).result);
             }
         }
@@ -272,6 +274,7 @@ bool test(
                 alpha,
                 beta,
                 stream,
+                true,
                 false).result);
         }
 

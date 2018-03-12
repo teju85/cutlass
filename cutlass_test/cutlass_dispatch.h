@@ -124,6 +124,7 @@ struct cutlass_gemm_dispatch
         value_t                                 *B,
         accum_t                                 *C,
         cudaStream_t                            stream = 0,
+        bool                                    enable_k_split = true,
         bool                                    debug_synchronous = false)
     {
         return gemm::device_gemm<
@@ -134,6 +135,7 @@ struct cutlass_gemm_dispatch
                 TransformB,
                 operand_alignment,
                 value_t,
+                accum_t,
                 accum_t,
                 epilogue_op_t,
                 accumulator_alignment>
@@ -146,6 +148,7 @@ struct cutlass_gemm_dispatch
                 B,
                 C,
                 stream,
+                enable_k_split,
                 debug_synchronous);
     }
 
@@ -161,6 +164,7 @@ struct cutlass_gemm_dispatch
         accum_t         alpha,                      ///< Scalar used for multiplicands
         accum_t         beta,                       ///< Scalar used for addend
         cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.
+        bool            enable_k_split = true,      ///< enable/disable k-split
         bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream
                                                     ///  after every kernel launch to check for errors.
     {
@@ -195,6 +199,7 @@ struct cutlass_gemm_dispatch
                         B,
                         C,
                         stream,
+                        enable_k_split,
                         debug_synchronous);
             #endif
         }
@@ -212,6 +217,7 @@ struct cutlass_gemm_dispatch
                         B,
                         C,
                         stream,
+                        enable_k_split,
                         debug_synchronous);
             #endif
         }
@@ -229,6 +235,7 @@ struct cutlass_gemm_dispatch
                         B,
                         C,
                         stream,
+                        enable_k_split,
                         debug_synchronous);
             #endif
         }
@@ -248,6 +255,7 @@ struct cutlass_gemm_dispatch
                             B,
                             C,
                             stream,
+                        enable_k_split,
                             debug_synchronous);
                 #endif
             #endif

@@ -198,7 +198,8 @@ struct k_split_control
         int     dim_k,
         int     block_tile_items_k,
         dim3    block_dims,
-        dim3    &grid_dims)         ///< [in,out]
+        dim3    &grid_dims,         ///< [in,out]
+        bool    enable_k_split=true)
     :
         d_flags(d_flags),
         split_k(dim_k)
@@ -211,7 +212,7 @@ struct k_split_control
             grid_dims);
 
         // Update split-k if wave efficiency is less than some threshold
-        if (wave_efficiency < 0.9)
+        if (enable_k_split && (wave_efficiency < 0.9))
         {
             int num_threadblocks = grid_dims.x * grid_dims.y * grid_dims.z;
 

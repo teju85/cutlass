@@ -110,6 +110,7 @@ template <
     typename                    block_task_policy_t,    ///< Parameterization of block_task_policy
     typename                    value_t,                ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,                ///< Accumulator value type (matrix C and scalars)
+    typename                    output_t,               ///< Output value type
     matrix_transform_t::kind_t  TransformA,             ///< View transform enumerant for matrix A
     int                         LdgAlignA,              ///< Alignment (in bytes) for A operand
     matrix_transform_t::kind_t  TransformB,             ///< View transform enumerant for matrix B
@@ -189,7 +190,7 @@ struct block_task
         ThreadLdsVectorsB = divide_assert<ThreadItemsX, LdsVectorDpVectorsB>::value,
 
         /// Number of elements in one LDG/STG vector of C-tile
-        ThreadLdgVectorSizeC = __NV_STD_MIN(LdgAlignC, 16) / (sizeof(accum_t)),
+        ThreadLdgVectorSizeC = __NV_STD_MIN(LdgAlignC, 16) / (sizeof(output_t)),
 
         /// Number of threads in warp
         WarpThreads = 32,
@@ -315,7 +316,7 @@ struct block_task
     int page_idx;
 
     /// Pointer to matrix C
-    accum_t *d_c;
+    output_t *d_c;
 
     /// Epilogue operation applied to update matrix C
     epilogue_op_t epilogue_op;
@@ -404,7 +405,7 @@ struct block_task
         scratch_storage_t *scratch,
         value_t *d_a,
         value_t *d_b,
-        accum_t *d_c,
+        output_t *d_c,
         epilogue_op_t epilogue_op,
         int dim_m,
         int dim_n,
@@ -516,13 +517,13 @@ struct block_task
                 int c_idx = (grid_raster.block_item_coords.x + thread_item_coords_tile_x) * dim_m +
                     grid_raster.block_item_coords.y + thread_item_coords_tile_y;
 
-                accum_t *my_c = d_c + c_idx;
+                output_t *my_c = d_c + c_idx;
 
                 #pragma unroll
                 for (int i = 0; i < LdsVectorDpVectorsA; ++i)
                 {
-                    accum_t c_slice = accum_t(0);
-                    accum_t *c_ptr = my_c + i;
+                    output_t c_slice = output_t(0);
+                    output_t *c_ptr = my_c + i;
 
                     if ((grid_raster.block_item_coords.x + thread_item_coords_tile_x) < dim_n &&
                         (grid_raster.block_item_coords.y + thread_item_coords_tile_y + i) < dim_m)

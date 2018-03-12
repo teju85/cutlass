@@ -57,7 +57,7 @@ namespace gemm {
  */
 template <
     typename value_t,
-    typename accum_t,
+    typename output_t,
     typename epilogue_op_t>
 struct param_pack
 {
@@ -67,7 +67,7 @@ struct param_pack
     k_split_control k_split;    ///< Abstraction for controlling inter-block k-splitting
     value_t *d_a;               ///< Pointer to matrix A array values
     value_t *d_b;               ///< Pointer to matrix B array values
-    accum_t *d_c;               ///< Pointer to matrix C array values
+    output_t *d_c;              ///< Pointer to matrix C array values
     epilogue_op_t epilogue_op;
 
     param_pack(
@@ -78,7 +78,7 @@ struct param_pack
         epilogue_op_t op,           ///< Epilogue operation to update matrix C
         value_t *d_a,               ///< Pointer to matrix A array values
         value_t *d_b,               ///< Pointer to matrix B array values
-        accum_t *d_c)               ///< Pointer to matrix C array values
+        output_t *d_c)              ///< Pointer to matrix C array values
     :
         m(m),
         n(n),
@@ -103,6 +103,7 @@ template <
     typename                    block_task_policy_t,  ///< Parameterization of block_task_policy
     typename                    value_t,            ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,            ///< Accumulator value type (matrix C and scalars)
+    typename                    output_t,           ///< Output value type
     matrix_transform_t::kind_t  TransformA,         ///< View transform enumerant for matrix A
     int                         LdgAlignA,          ///< Alignment (in bytes) for A operand
     matrix_transform_t::kind_t  TransformB,         ///< View transform enumerant for matrix B
@@ -119,6 +120,7 @@ template <
     typename                    block_task_policy_t,  ///< Parameterization of block_task_policy
     typename                    value_t,            ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,            ///< Accumulator value type (matrix C and scalars)
+    typename                    output_t,           ///< Output value type
     matrix_transform_t::kind_t  TransformA,         ///< View transform enumerant for matrix A
     int                         LdgAlignA,          ///< Alignment (in bytes) for A operand
     matrix_transform_t::kind_t  TransformB,         ///< View transform enumerant for matrix B
@@ -133,6 +135,7 @@ struct gemm_block_task<
     block_task_policy_t,
     value_t,
     accum_t,
+    output_t,
     TransformA,
     LdgAlignA,
     TransformB,
@@ -148,6 +151,7 @@ struct gemm_block_task<
             block_task_policy_t,
             value_t,
             accum_t,
+            output_t,
             TransformA,
             LdgAlignA,
             TransformB,
@@ -176,6 +180,7 @@ struct gemm_block_task<
     math_operation_class_t::matrix,
     block_task_policy_t,
     value_t,
+    accum_t,
     accum_t,
     TransformA,
     LdgAlignA,
@@ -224,11 +229,11 @@ template <
     int                         LdgAlignB,          ///< Alignment of B matrix elements in bytes
     typename                    value_t,            ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,            ///< Accumulator value type (matrix C and scalars)
+    typename                    output_t,           ///< Output value type
     typename                    epilogue_op_t,      ///< Epilogue operation applied to update matrix C
     int                         LdgAlignC,          ///< Alignment of C elements in bytes
     bool                        AllowRaggedTiles,   ///< Boolean to indicate whether AllowRaggedTiles handling is enabled
-    typename                    dp_accum_traits_t=dp_accummulate<value_t, accum_t> ///< Accumulator traits
-
+    typename                    dp_accum_traits_t   ///< Accumulator traits
 >
 __global__ void kernel(param_pack<value_t, accum_t, epilogue_op_t> pack)
 {
@@ -238,6 +243,7 @@ __global__ void kernel(param_pack<value_t, accum_t, epilogue_op_t> pack)
         block_task_policy_t,
         value_t,
         accum_t,
+        output_t,
         TransformA,
         LdgAlignA,
         TransformB,
@@ -344,9 +350,11 @@ template <
     int                         LdgAlignB,          ///< Alignment of B matrix elements in bytes
     typename                    value_t,            ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,            ///< Accumulator value type (matrix C and scalars)
+    typename                    output_t,           ///< Output value type
     typename                    epilogue_op_t,      ///< Epilogue operation
     int                         LdgAlignC,          ///< Alignment of C matrix elements in bytes
     bool                        AllowRaggedTiles,   ///< Boolean to indicate whether AllowRaggedTiles handling is enabled
+    typename                    dp_accum_traits_t,  ///< Accumulator traits
     typename                    kernel_ptr_t>       ///< GEMM kernel function pointer type
 launch_configuration dispatch(
     kernel_ptr_t    kernel_ptr,                     ///< GEMM kernel function pointer
@@ -356,8 +364,9 @@ launch_configuration dispatch(
     epilogue_op_t   epilogue_op,                    ///< Epilogue operation to update matrix C
     value_t         *d_a,                           ///< Device pointer to matrix A array values
     value_t         *d_b,                           ///< Device pointer to matrix B array values
-    accum_t         *d_c,                           ///< Device pointer to matrix C array values
+    output_t        *d_c,                           ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                     ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    bool            enable_k_split=true,            ///< enable/disable split-k
     bool            debug_synchronous = true)       ///< Whether or not to synchronize the stream after every kernel launch
                                                     ///  to check for errors.  Also causes launch configurations to be printed
                                                     ///  to the console if DEBUG is defined.  Default is \p false.
@@ -411,11 +420,13 @@ launch_configuration dispatch(
         k,
         block_task_policy_t::BlockItemsK,
         config.block,
-        config.grid);     // in,out
+        config.grid,      // in,out
+        enable_k_split);
 
     config.split_k = k_split.split_k;
 
     // Log kernel configuration
+#ifdef DEBUG  // to avoid warnings when DEBUG is not defined
     if (debug_synchronous)
     {
         // Compute tiling efficiency
@@ -438,9 +449,10 @@ launch_configuration dispatch(
             max_sm_occupancy,
             k_split.split_k);
     }
+#endif // DEBUG
 
     // Construct parameter-pack
-    param_pack<value_t, accum_t, epilogue_op_t> pack(
+    param_pack<value_t, output_t, epilogue_op_t> pack(
         m,
         n,
         k,
@@ -487,8 +499,11 @@ template <
     int                         LdgAlignB,      ///< Alignment (in bytes) of B operand
     typename                    value_t,        ///< Multiplicand value type (matrices A and B)
     typename                    accum_t,        ///< Accumulator value type (matrix C and scalars)
+    typename                    output_t,       ///< Output value type
     typename                    epilogue_op_t,  ///< Epilogue operation to update matrix C
-    int                         LdgAlignC>      ///< Alignment (in bytes) of C operand
+    int                         LdgAlignC,      ///< Alignment (in bytes) of C operand
+    typename                    dp_accum_traits_t=dp_accummulate<value_t, accum_t> ///< Accumulator traits
+>
 launch_configuration device_gemm(
     int             m,                          ///< Height in rows of op(A) and C
     int             n,                          ///< Width in columns of op(B) and C
@@ -498,6 +513,7 @@ launch_configuration device_gemm(
     value_t         *d_b,                       ///< Device pointer to matrix B array values
     accum_t         *d_c,                       ///< Device pointer to matrix C array values
     cudaStream_t    stream = 0,                 ///< CUDA stream to launch kernels within.  Default is stream<sub>0</sub>.
+    bool            enable_k_split=true,        ///< enable/disable k-split
     bool            debug_synchronous = false)  ///< Whether or not to synchronize the stream after every kernel launch to
                                                 ///  check for errors.  Also causes launch configurations to be printed to
                                                 ///  the console if DEBUG is defined.  Default is \p false.
@@ -514,8 +530,8 @@ launch_configuration device_gemm(
         // Needs ragged tile-handling
         static const bool AllowRaggedTiles = true;
 
-        return dispatch<math_op, block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles>(
-            kernel<math_op,block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles>,
+        return dispatch<math_op, block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, output_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles, dp_accum_traits_t>(
+            kernel<math_op,block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, output_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles, dp_accum_traits_t>,
             m,
             n,
             k,
@@ -524,6 +540,7 @@ launch_configuration device_gemm(
             d_b,
             d_c,
             stream,
+            enable_k_split,
             debug_synchronous);
     }
     else
@@ -531,8 +548,8 @@ launch_configuration device_gemm(
         // Does not need ragged tile-handling
         static const bool AllowRaggedTiles = false;
 
-        return dispatch<math_op, block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles>(
-            kernel<math_op,block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles>,
+        return dispatch<math_op, block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, output_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles, dp_accum_traits_t>(
+            kernel<math_op,block_task_policy_t, TransformA, LdgAlignA, TransformB, LdgAlignB, value_t, accum_t, output_t, epilogue_op_t, LdgAlignC, AllowRaggedTiles, dp_accum_traits_t>,
             m,
             n,
             k,
@@ -541,6 +558,7 @@ launch_configuration device_gemm(
             d_b,
             d_c,
             stream,
+            enable_k_split,
             debug_synchronous);
     }
 
