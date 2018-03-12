@@ -257,7 +257,7 @@ __global__ void kernel(param_pack<value_t, accum_t, epilogue_op_t> pack)
     __shared__ typename block_task_t::scratch_storage_t smem;
 
     // Construct and run the task
-    block_task_t(
+    block_task_t bt(
         &smem,
         pack.d_a,
         pack.d_b,
@@ -266,7 +266,9 @@ __global__ void kernel(param_pack<value_t, accum_t, epilogue_op_t> pack)
         pack.m,
         pack.n,
         pack.k,
-        pack.k_split).run();
+        pack.k_split);
+    bt.run();
+    bt.epilogue();
 }
 
 

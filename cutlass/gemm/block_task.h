@@ -668,10 +668,13 @@ struct block_task
         consume_tile<false>();
 
         //
-        // Eplilogue
+        // Epilogue
+        //
+        // It is called explicitly in the kernel to allow users to inherit
+        // and extend block_task
         //
 
-        epilogue();
+        //epilogue();
     }
 };
 
