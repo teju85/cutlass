@@ -209,67 +209,77 @@ struct io_vector <
 /**
  * Define vector-4 LD specialization for the given load modifier
  */
-#define CUTLASS_LD_V4(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint) \
+#define CUTLASS_LD_V4(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
     template <typename ptr_t>                                                                   \
     inline __device__                                                                           \
     void f_name(                                                                                \
         value_t (&dest)[4],                                                                     \
         ptr_t ptr)                                                                              \
     {                                                                                           \
+        cast_t d0, d1, d2, d3;                                                                  \
         asm volatile ("ld."#load_modifier".v4."#ptx_type" {%0, %1, %2, %3}, [%4];\n"            \
             :                                                                                   \
-                "="#val_constraint(dest[0]),                                                    \
-                "="#val_constraint(dest[1]),                                                    \
-                "="#val_constraint(dest[2]),                                                    \
-                "="#val_constraint(dest[3])                                                     \
+                "="#val_constraint(d0),                                                         \
+                "="#val_constraint(d1),                                                         \
+                "="#val_constraint(d2),                                                         \
+                "="#val_constraint(d3)                                                          \
             :                                                                                   \
                 #ptr_constraint(ptr));                                                          \
+        dest[0] = (value_t)d0;                                                                  \
+        dest[1] = (value_t)d1;                                                                  \
+        dest[2] = (value_t)d2;                                                                  \
+        dest[3] = (value_t)d3;                                                                  \
     }
 
 /**
  * Define vector-2 LD specialization for the given load modifier
  */
-#define CUTLASS_LD_V2(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint) \
+#define CUTLASS_LD_V2(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
     template <typename ptr_t>                                                                   \
     inline __device__                                                                           \
     void f_name(                                                                                \
         value_t (&dest)[2],                                                                     \
         ptr_t ptr)                                                                              \
     {                                                                                           \
+        cast_t d0, d1;                                                                          \
         asm volatile ("ld."#load_modifier".v2."#ptx_type" {%0, %1}, [%2];\n"                    \
             :                                                                                   \
-                "="#val_constraint(dest[0]),                                                    \
-                "="#val_constraint(dest[1])                                                     \
+                "="#val_constraint(d0),                                                         \
+                "="#val_constraint(d1)                                                          \
             :                                                                                   \
                 #ptr_constraint(ptr));                                                          \
+        dest[0] = (value_t)d0;                                                                  \
+        dest[1] = (value_t)d1;                                                                  \
     }
 
 
 /**
  * Define vector-1 LD specialization for the given load modifier
  */
-#define CUTLASS_LD_V1(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint) \
+#define CUTLASS_LD_V1(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
     template <typename ptr_t>                                                                   \
     inline __device__                                                                           \
     void f_name(                                                                                \
         value_t (&dest)[1],                                                                     \
         ptr_t ptr)                                                                              \
     {                                                                                           \
+        cast_t d0;                                                                              \
         asm volatile ("ld."#load_modifier"."#ptx_type" %0, [%1];\n"                             \
             :                                                                                   \
-                "="#val_constraint(dest[0])                                                     \
+                "="#val_constraint(d0)                                                          \
             :                                                                                   \
                 #ptr_constraint(ptr));                                                          \
+        dest[0] = (value_t)d0;                                                                  \
     }
 
 
 /**
  * Define powers-of-two vector LD specializations
  */
-#define CUTLASS_LD_ALL(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)    \
-    CUTLASS_LD_V4(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)         \
-    CUTLASS_LD_V2(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)         \
-    CUTLASS_LD_V1(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)
+#define CUTLASS_LD_ALL(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
+    CUTLASS_LD_V4(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
+    CUTLASS_LD_V2(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
+    CUTLASS_LD_V1(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t)
 
 
 /******************************************************************************
@@ -279,7 +289,7 @@ struct io_vector <
 /**
  * Define vector-4 ST specialization for the given load modifier
  */
-#define CUTLASS_ST_V4(f_name, value_t, store_modifier, ptx_type, val_constraint, ptr_constraint)    \
+#define CUTLASS_ST_V4(f_name, value_t, store_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
     template <typename ptr_t>                                                                       \
     inline __device__                                                                               \
     void f_name(                                                                                    \
@@ -289,17 +299,17 @@ struct io_vector <
         asm volatile ("st."#store_modifier".v4."#ptx_type" [%0], {%1, %2, %3, %4};\n"               \
             : :                                                                                     \
                 #ptr_constraint(ptr),                                                               \
-                #val_constraint(src[0]),                                                            \
-                #val_constraint(src[1]),                                                            \
-                #val_constraint(src[2]),                                                            \
-                #val_constraint(src[3]));                                                           \
+                #val_constraint((cast_t)src[0]),                                                    \
+                #val_constraint((cast_t)src[1]),                                                    \
+                #val_constraint((cast_t)src[2]),                                                    \
+                #val_constraint((cast_t)src[3]));                                                   \
     }
 
 
 /**
  * Define vector-2 ST specialization for the given load modifier
  */
-#define CUTLASS_ST_V2(f_name, value_t, store_modifier, ptx_type, val_constraint, ptr_constraint)    \
+#define CUTLASS_ST_V2(f_name, value_t, store_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
     template <typename ptr_t>                                                                       \
     inline __device__                                                                               \
     void f_name(                                                                                    \
@@ -309,14 +319,14 @@ struct io_vector <
         asm volatile ("st."#store_modifier".v2."#ptx_type" [%0], {%1, %2};\n"                       \
             : :                                                                                     \
                 #ptr_constraint(ptr),                                                               \
-                #val_constraint(src[0]),                                                            \
-                #val_constraint(src[1]));                                                           \
+                #val_constraint((cast_t)src[0]),                                                    \
+                #val_constraint((cast_t)src[1]));                                                   \
     }
 
 /**
  * Define vector-1 ST specialization for the given load modifier
  */
-#define CUTLASS_ST_V1(f_name, value_t, store_modifier, ptx_type, val_constraint, ptr_constraint)    \
+#define CUTLASS_ST_V1(f_name, value_t, store_modifier, ptx_type, val_constraint, ptr_constraint, cast_t) \
     template <typename ptr_t>                                                                       \
     inline __device__                                                                               \
     void f_name(                                                                                    \
@@ -326,17 +336,17 @@ struct io_vector <
         asm volatile ("st."#store_modifier"."#ptx_type" [%0], %1;\n"                                \
             : :                                                                                     \
                 #ptr_constraint(ptr),                                                               \
-                #val_constraint(src[0]));                                                           \
+              #val_constraint((cast_t)src[0]));                                                     \
     }
 
 
 /**
  * Define powers-of-two vector LD specializations
  */
-#define CUTLASS_ST_ALL(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)    \
-    CUTLASS_ST_V4(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)         \
-    CUTLASS_ST_V2(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)         \
-    CUTLASS_ST_V1(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint)
+#define CUTLASS_ST_ALL(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t)    \
+    CUTLASS_ST_V4(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t)         \
+    CUTLASS_ST_V2(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t)         \
+    CUTLASS_ST_V1(f_name, value_t, load_modifier, ptx_type, val_constraint, ptr_constraint, cast_t)
 
 
 
@@ -347,17 +357,18 @@ struct io_vector <
 /**
  * Define global and shared LD specializations
  */
-#define CUTLASS_IO(value_t, ptx_type, val_constraint)                                       \
-    CUTLASS_LD_ALL(ldg_cg_internal, value_t, global.cg, ptx_type, val_constraint, l)        \
-    CUTLASS_ST_ALL(stg_cg_internal, value_t, global.cg, ptx_type, val_constraint, l)
+#define CUTLASS_IO(value_t, ptx_type, val_constraint, cast_t)                                       \
+    CUTLASS_LD_ALL(ldg_cg_internal, value_t, global.cg, ptx_type, val_constraint, l, cast_t)        \
+    CUTLASS_ST_ALL(stg_cg_internal, value_t, global.cg, ptx_type, val_constraint, l, cast_t)
 
 
 // Define IO for useful types
-CUTLASS_IO(double,     f64, d)
-CUTLASS_IO(float,      f32, f)
-CUTLASS_IO(int64_t,    b64, l)
-CUTLASS_IO(int32_t,    b32, r)
-CUTLASS_IO(int16_t,    b16, h)
+CUTLASS_IO(double,     f64, d, double)
+CUTLASS_IO(float,      f32, f, float)
+CUTLASS_IO(int64_t,    b64, l, int64_t)
+CUTLASS_IO(int32_t,    b32, r, int32_t)
+CUTLASS_IO(int16_t,    b16, h, int16_t)
+CUTLASS_IO(int8_t,     b8,  r, int32_t)
 
 
 // Macro cleanup
