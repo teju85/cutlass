@@ -109,7 +109,8 @@ template <
     int                         LdgAlignB,          ///< Alignment (in bytes) for B operand
     typename                    epilogue_op_t,      ///< Epilogue operation applied to GEMM
     int                         LdgAlignC,          ///< Alignment (in bytes) for C operand
-    bool                        AllowRaggedTiles    ///< Whether GEMM supports matrix sizes other than multiple of BlockItems{XY}
+    bool                        AllowRaggedTiles,   ///< Whether GEMM supports matrix sizes other than multiple of BlockItems{XY}
+    typename                    dp_accum_traits_t   ///< Accumulator traits
 >
 struct gemm_block_task;
 
@@ -124,7 +125,8 @@ template <
     int                         LdgAlignB,          ///< Alignment (in bytes) for B operand
     typename                    epilogue_op_t,      ///< Epilogue operation applied to GEMM
     int                         LdgAlignC,          ///< Alignment (in bytes) for C operand
-    bool                        AllowRaggedTiles    ///< Whether GEMM supports matrix sizes other than multiple of BlockItems{XY}
+    bool                        AllowRaggedTiles,   ///< Whether GEMM supports matrix sizes other than multiple of BlockItems{XY}
+    typename                    dp_accum_traits_t   ///< Accumulator traits
 >
 struct gemm_block_task<
     math_operation_class_t::scalar,
@@ -137,7 +139,8 @@ struct gemm_block_task<
     LdgAlignB,
     epilogue_op_t,
     LdgAlignC,
-    AllowRaggedTiles
+    AllowRaggedTiles,
+    dp_accum_traits_t
 >
 {
     // Parameterize task type
@@ -151,7 +154,8 @@ struct gemm_block_task<
             LdgAlignB,
             epilogue_op_t,
             LdgAlignC,
-            AllowRaggedTiles> type;
+            AllowRaggedTiles,
+            dp_accum_traits_t> type;
 };
 
 /// Matrix math operations
@@ -165,7 +169,8 @@ template <
     int                         LdgAlignB,          ///< Alignment (in bytes) for B operand
     typename                    epilogue_op_t,      ///< Epilogue operation applied to GEMM
     int                         LdgAlignC,          ///< Alignment (in bytes) for C operand
-    bool                        AllowRaggedTiles    ///< Whether GEMM supports matrix sizes other than multiple of BlockItems{XY}
+    bool                        AllowRaggedTiles,   ///< Whether GEMM supports matrix sizes other than multiple of BlockItems{XY}
+    typename                    dp_accum_traits_t   ///< Accumulator traits
 >
 struct gemm_block_task<
     math_operation_class_t::matrix,
@@ -178,7 +183,8 @@ struct gemm_block_task<
     LdgAlignB,
     epilogue_op_t,
     LdgAlignC,
-    AllowRaggedTiles>
+    AllowRaggedTiles,
+    dp_accum_traits_t>
 {
 
 #if defined(WMMA)   // conditional compilation with WMMA headers
@@ -220,7 +226,10 @@ template <
     typename                    accum_t,            ///< Accumulator value type (matrix C and scalars)
     typename                    epilogue_op_t,      ///< Epilogue operation applied to update matrix C
     int                         LdgAlignC,          ///< Alignment of C elements in bytes
-    bool                        AllowRaggedTiles>   ///< Boolean to indicate whether AllowRaggedTiles handling is enabled
+    bool                        AllowRaggedTiles,   ///< Boolean to indicate whether AllowRaggedTiles handling is enabled
+    typename                    dp_accum_traits_t=dp_accummulate<value_t, accum_t> ///< Accumulator traits
+
+>
 __global__ void kernel(param_pack<value_t, accum_t, epilogue_op_t> pack)
 {
     // Parameterize task type
@@ -235,7 +244,8 @@ __global__ void kernel(param_pack<value_t, accum_t, epilogue_op_t> pack)
         LdgAlignB,
         epilogue_op_t,
         LdgAlignC,
-        AllowRaggedTiles>::type block_task_t;
+        AllowRaggedTiles,
+        dp_accum_traits_t>::type block_task_t;
 
     // Declare statically-allocated shared storage
     __shared__ typename block_task_t::scratch_storage_t smem;

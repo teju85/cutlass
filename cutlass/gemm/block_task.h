@@ -116,7 +116,8 @@ template <
     int                         LdgAlignB,              ///< Alignment (in bytes) for B operand
     typename                    epilogue_op_t,          ///< Epilogue operation applied to GEMM
     int                         LdgAlignC,              ///< Alignment (in bytes) for C operand
-    bool                        AllowRaggedTiles        ///< Whether the input matrix's dimensions need not be an even-multiple of the block-wide tile dimensions
+    bool                        AllowRaggedTiles,       ///< Whether the input matrix's dimensions need not be an even-multiple of the block-wide tile dimensions
+    typename                    dp_accum_traits_t=dp_accummulate<value_t, accum_t> ///< Accumulator traits
 >
 struct block_task
 {
@@ -141,7 +142,8 @@ struct block_task
             ThreadItemsY,
             ThreadItemsX,
             value_t,
-            accum_t>
+            accum_t,
+            dp_accum_traits_t>
         thread_accumulator_t;
 
     /// Dot-product vector type along the K-axis (e.g, uchar4 when using IDP4A)

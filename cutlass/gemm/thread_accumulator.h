@@ -78,22 +78,13 @@ template <
     int ThreadItemsX,                   ///< Width of thread tile in accum_t
     typename value_t,                   ///< Multiplicand value type
     typename accum_t,                   ///< Accumulator value type
+    typename dp_accum_traits_t,         ///< Accumulator traits
     int ACCUM_BYTES =                   ///< Size in bytes of accum_t
         sizeof(accum_t),
     arch_family_t::kind_t ArchFamily =  ///< Architectural family enumerant
         CUTLASS_ARCH_FAMILY>
 struct thread_accumulator
 {
-protected:
-
-    //-------------------------------------------------------------------------
-    // Constants and types
-    //-------------------------------------------------------------------------
-
-    /// Specialized dot-product traits type
-    typedef dp_accummulate<value_t, accum_t> dp_accum_traits_t;
-
-
 public:
 
     //-------------------------------------------------------------------------
@@ -233,6 +224,7 @@ struct thread_accumulator<
     ThreadItemsX,
     __half,                             ///< Multiplicand value type (matrices A and B)
     __half,                             ///< Accumulator value type (matrix C and scalars)
+    dp_accummulate<__half,__half>,      ///< Accumulator traits (to keep compiler happy!)
     2,                                  ///< Size in bytes of accum_t
     ArchFamily>
 {
