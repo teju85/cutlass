@@ -62,6 +62,7 @@
 // Dispatch routines to CUBLAS and CUTLASS
 #include "cublas_dispatch.h"
 #include "cutlass_dispatch.h"
+#include <cutlass/util/printable_operator.h>
 
 /******************************************************************************
  * Globals, constants and typedefs

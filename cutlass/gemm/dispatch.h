@@ -404,7 +404,7 @@ launch_configuration dispatch(
 
     // Get SM count
     int sm_count;
-    if (CUDA_PERROR_DEBUG(config.result = get_sm_count(sm_count)))
+    if (CUDA_PERROR_DEBUG(config.result = Introspector::get_sm_count(sm_count)))
         return config;
 
     // Get k-split flag storage (TODO: make a pool)

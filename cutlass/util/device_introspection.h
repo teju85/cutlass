@@ -151,11 +151,17 @@ template <typename T>
 __global__ void empty_kernel(void) { }
 
 
+/*
+ * \brief Provides helper routines to fetch ptx/sm versions and the like
+ * \note this struct was created in order to avoid multiple-definition errors, especially
+ * when including cutlass headers multiple times in a single project
+ */
+struct Introspector {
 
 /**
  * \brief Retrieves the PTX version that will be used on the current device (major * 100 + minor * 10)
  */
-cudaError_t ptx_version(int &version)
+static cudaError_t ptx_version(int &version)
 {
     struct Dummy
     {
@@ -185,7 +191,7 @@ cudaError_t ptx_version(int &version)
 /**
  * \brief Retrieves the SM version (major * 100 + minor * 10) for the current device
  */
-cudaError_t get_sm_version(int &sm_version)
+static cudaError_t get_sm_version(int &sm_version)
 {
     cudaError_t error = cudaSuccess;
 
@@ -209,7 +215,7 @@ cudaError_t get_sm_version(int &sm_version)
 /**
  * \brief Retrieves the count for the current device
  */
-cudaError_t get_sm_count(int &sm_count)
+static cudaError_t get_sm_count(int &sm_count)
 {
     cudaError_t error = cudaSuccess;
 
@@ -224,6 +230,8 @@ cudaError_t get_sm_count(int &sm_count)
 
     return error;
 }
+
+};
 
 
 } // namespace cutlass

@@ -60,8 +60,12 @@ __device__ int d_flags_split_k[NumFlagsSplitK];
 
 /**
  * Preparation kernel for zero-initializing semaphore flags
+ *
+ * TODO: once the above demand-allocated storage is ready, this can be replaced
+ *  with cudaMemsetAsync calls
  */
-__global__ void prepare_kernel(int *d_flags_split_k)
+template <typename T>
+__global__ void prepare_kernel(T *d_flags_split_k)
 {
     int tid = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (tid < NumFlagsSplitK)
@@ -261,7 +265,7 @@ struct k_split_control
             int block_threads = 128;
             int grid_dims = (NumFlagsSplitK + block_threads - 1) / block_threads;
 
-            prepare_kernel<<<grid_dims, block_threads, 0, stream>>>(d_flags);
+            prepare_kernel<int><<<grid_dims, block_threads, 0, stream>>>(d_flags);
 
             // Check for failure to launch
             if (CUDA_PERROR_DEBUG(error = cudaPeekAtLastError()))
