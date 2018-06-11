@@ -63,7 +63,8 @@ namespace gemm {
         output_t operator()(
             accum_t accumulator,
             output_t c,
-            size_t idx) const
+            size_t xidx,
+            size_t yidx) const
         {
             return output_t(alpha * scalar_t(accumulator) + beta * scalar_t(c));
         }
@@ -73,7 +74,8 @@ namespace gemm {
         inline __device__ __host__
         output_t operator()(
             accum_t accumulator,
-            size_t idx) const
+            size_t xidx,
+            size_t yidx) const
         {
             return output_t(alpha * scalar_t(accumulator));
         }

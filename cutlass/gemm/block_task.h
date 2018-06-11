@@ -514,8 +514,9 @@ struct block_task
                 int thread_item_coords_tile_x = thread_strip_offset_b + (thread_strip_b * WarpThreadsX * LdsVectorDpVectorsB) + (x % LdsVectorDpVectorsB);
                 int thread_item_coords_tile_y = thread_strip_offset_a + (thread_strip_a * WarpThreadsY * LdsVectorDpVectorsA) + (y % LdsVectorDpVectorsA);
 
-                int c_idx = (grid_raster.block_item_coords.x + thread_item_coords_tile_x) * dim_m +
-                    grid_raster.block_item_coords.y + thread_item_coords_tile_y;
+                int x_idx = grid_raster.block_item_coords.x + thread_item_coords_tile_x;
+                int y_idx = grid_raster.block_item_coords.y + thread_item_coords_tile_y;
+                int c_idx = x_idx * dim_m + y_idx;
 
                 output_t *my_c = d_c + c_idx;
 
@@ -533,7 +534,7 @@ struct block_task
                             ldg_cg(c_slice, c_ptr);
                         }
 
-                        c_slice = epilogue_op(accumulator.get(x, y + i), c_slice, c_idx + i);
+                        c_slice = epilogue_op(accumulator.get(x, y + i), c_slice, x_idx, y_idx + i);
 
                         stg_cg(c_ptr, c_slice);
                     }
