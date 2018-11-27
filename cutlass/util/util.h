@@ -35,7 +35,7 @@
 #include "debug.h"
 #include "device_introspection.h"
 #include "io_intrinsics.h"
-#include "math.h"
+#include "cutlass_math.h"
 #include "nv_std.h"
 #include "printable.h"
 #include "matrix_transform.h"
