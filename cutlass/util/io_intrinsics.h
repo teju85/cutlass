@@ -36,7 +36,7 @@
 #include <cuda_fp16.h>
 
 #include "nv_std.h"
-#include "math.h"
+#include "cutlass_math.h"
 
 namespace cutlass {
 
